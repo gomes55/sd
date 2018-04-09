@@ -15,8 +15,6 @@ import javax.ws.rs.core.Response;
 import org.glassfish.jersey.client.ClientConfig;
 
 import api.storage.BlobStorage.BlobReader;
-import api.storage.Datanode;
-import api.storage.Namenode;
 
 /*
  * 
@@ -30,14 +28,15 @@ public class BufferedBlobReader implements BlobReader {
 
 	final String name;
 	WebTarget targetName;
-	WebTarget targetData;
+	List<String> dataURIs;
 	
 	final Iterator<String> blocks;
 
 	final LazyBlockReader lazyBlockIterator;
 	
-	public BufferedBlobReader( String name,String nameUrl,String dataUrl) {
+	public BufferedBlobReader( String name,String nameUrl,List<String> dataURIs) {
 		this.name = name;
+		this.dataURIs = dataURIs;
 	
 		ClientConfig nameConfig = new ClientConfig();
 		Client nameClient = ClientBuilder.newClient(nameConfig);
@@ -45,13 +44,13 @@ public class BufferedBlobReader implements BlobReader {
 		URI nameBaseURI = UriBuilder.fromUri(nameUrl).build();
 		targetName = nameClient.target( nameBaseURI );
 		
-		ClientConfig dataConfig = new ClientConfig();
+		/*ClientConfig dataConfig = new ClientConfig();
 		Client dataClient = ClientBuilder.newClient(dataConfig);
 
 		URI dataBaseURI = UriBuilder.fromUri(dataUrl).build();
-		targetData = dataClient.target( dataBaseURI );
+		targetData = dataClient.target( dataBaseURI );*/
 		
-		Response response = targetName.path("/namenode/"+name)
+		Response response = targetName.path("/namenode/" + name)
 			    .request()
 			    .get();
 		
@@ -79,15 +78,53 @@ public class BufferedBlobReader implements BlobReader {
 			return Collections.emptyIterator();
 	} 
 
+	@SuppressWarnings("unchecked")
 	private List<String> fetchBlockLines(String block) {
-
-		Response response = targetData.path("/datanode/"+block)
+		
+		ClientConfig dataConfig = new ClientConfig();
+		Client dataClient = ClientBuilder.newClient(dataConfig);
+		byte[] blockData = null;
+		
+		Response response = targetName.path("/namenode/list/").queryParam("prefix", name) //get all blocks
 			    .request()
 			    .get();
 		
-		@SuppressWarnings("unchecked")
-		byte[] data = response.readEntity(byte[].class);
-		return Arrays.asList( new String(data).split("\\R"));
+		List<String> data = null;
+		if(response.hasEntity()) {
+			System.out.println("RECEIVED");
+			data = response.readEntity(List.class);
+		}else{
+			System.err.println(response.getStatus());
+		}
+		
+		if(data != null) {
+			for(String blob : data) {
+				response = targetName.path("/namenode/" + blob)
+						.request()
+						.get();
+				
+				List<String> blobs = response.readEntity(List.class);				
+				for(String blocks : blobs) {
+					String[] tokens = block.split(" ");
+					if(tokens[0].equals(block)) {
+						URI baseURI = UriBuilder.fromUri(tokens[1]).build();
+						WebTarget targetData = dataClient.target(baseURI);
+						
+						response = targetData.path("/datanode/" + blocks)
+								.request()
+								.get();
+					}
+					
+					if(response.hasEntity()) {
+						System.out.println("RECEIVED DATRAtasSDASDASDAS");
+						blockData = response.readEntity(byte[].class);
+					}else {
+						System.err.println(response.getStatus());
+					}
+				}
+			}
+		}
+		return Arrays.asList( new String(blockData).split("\\R"));
 	}
 	
 	private class LazyBlockReader implements Iterator<String> {

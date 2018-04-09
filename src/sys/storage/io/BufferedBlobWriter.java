@@ -16,9 +16,8 @@ import javax.ws.rs.core.Response;
 import org.glassfish.jersey.client.ClientConfig;
 
 import api.storage.BlobStorage.BlobWriter;
-import api.storage.Datanode;
-import api.storage.Namenode;
 import utils.IO;
+import utils.Random;
 
 /*
  * 
@@ -33,46 +32,52 @@ public class BufferedBlobWriter implements BlobWriter {
 	final int blockSize;
 	final ByteArrayOutputStream buf;
 	WebTarget targetName;
-	WebTarget targetData;
+	List<String> dataURIs;
 
 	final List<String> blocks = new LinkedList<>();
 	
-	public BufferedBlobWriter(String name, int blockSize ,String nameUrl,String dataUrl) {
+	public BufferedBlobWriter(String name, int blockSize , String nameUrl, List<String> dataURIs) {
 		this.name = name;
+		this.dataURIs = dataURIs;
 		
 		ClientConfig nameConfig = new ClientConfig();
 		Client nameClient = ClientBuilder.newClient(nameConfig);
 
 		URI nameBaseURI = UriBuilder.fromUri(nameUrl).build();
 		targetName = nameClient.target( nameBaseURI );
-		
-		
-		ClientConfig dataConfig = new ClientConfig();
-		Client dataClient = ClientBuilder.newClient(dataConfig);
 
-		URI dataBaseURI = UriBuilder.fromUri(dataUrl).build();
-		targetData = dataClient.target( dataBaseURI );
-		
+		/*URI dataBaseURI = UriBuilder.fromUri(dataUrl).build();
+		targetData = dataClient.target( dataBaseURI );*/		
 		
 		this.blockSize = blockSize;
 		this.buf = new ByteArrayOutputStream( blockSize );
 	}
 
 	private void flush( byte[] data, boolean eob ) {
-				Response response = targetData.path("/datanode/")   //ver se preciso de alterar
+		ClientConfig dataConfig = new ClientConfig();
+		Client dataClient = ClientBuilder.newClient(dataConfig);
+		
+		String dataUri = dataURIs.get(Random.nextInt(dataURIs.size()));
+		URI dataBaseURI = UriBuilder.fromUri(dataUri).build();
+		WebTarget targetData = dataClient.target(dataBaseURI);
+		
+		//String[] postResp;
+		
+		Response response = targetData.path("/datanode/")   //ver se preciso de alterar
 			    .request()
 			    .post( Entity.entity( data, MediaType.APPLICATION_OCTET_STREAM));
 				
-				if( response.hasEntity() ) {
-					blocks.add(response.readEntity(String.class)); 
-				}else{
-					System.err.println( response.getStatus());
-				}		
+		if( response.hasEntity() ) {
+			String postResp = response.readEntity(String.class); 
+			blocks.add(postResp); 
+		}else{
+			System.err.println( response.getStatus());
+		}		
 	
 		if( eob ) {
-		 response = targetName.path("/namenode/"+name)  
-				 .request()
-				 .post( Entity.entity( blocks, MediaType.APPLICATION_JSON));
+			response = targetName.path("/namenode/"+name)  
+					.request()
+					.post( Entity.entity( blocks, MediaType.APPLICATION_JSON));
 			blocks.clear();
 		}
 	}

@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.logging.Logger;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
@@ -23,29 +22,30 @@ import utils.Random;
  * 
  */
 public class DatanodeClient implements Datanode {
-	//private static Logger logger = Logger.getLogger(Datanode.class.toString() );
 
 	private static final int INITIAL_SIZE = 32;
 	private Map<String, byte[]> blocks = new HashMap<>(INITIAL_SIZE);
 	
-	private static final String URI_BASE = "http://0.0.0.0:9990/v2"; //Different ports
+	static String myURI;
 	
-	public static void main(String [] args) throws IOException {
+	public static void main(String [] args) throws IOException, InterruptedException {
 		
+		MultiCastServer helper = new MultiCastServer();
 		
-
 		ResourceConfig config = new ResourceConfig();
 		config.register( new DatanodeClient() );
+		JdkHttpServerFactory.createHttpServer( URI.create(helper.getURL()), config);
+		
+		helper.sendURL();
+		myURI = helper.getURL();
 
-		JdkHttpServerFactory.createHttpServer( URI.create(URI_BASE), config);
-
-		System.err.println("Datanode Server ready....");
+		System.err.println("Datanode Server ready @ " + myURI);
 	}
 	
 	
 	@Override
 	public String createBlock(byte[] data) {
-		String id = URI_BASE + " " + Random.key64(); //Return string with URI + id
+		String id = Random.key64() + " " + myURI; //Return string with URI + id
 		System.out.println(id);
 		
 		if( blocks.putIfAbsent(id, data) != null)

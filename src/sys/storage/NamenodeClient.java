@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.logging.Logger;
 
 import javax.ws.rs.WebApplicationException;
 import javax.ws.rs.core.Response.Status;
@@ -26,22 +25,20 @@ import api.storage.Namenode;
  */
 public class NamenodeClient implements Namenode {
 
-	//private static Logger logger = Logger.getLogger(NamenodeClient.class.toString() );
-	
 	Trie<String, List<String>> names = new PatriciaTrie<>();
 	
-	private static final String URI_BASE = "http://0.0.0.0:9999/v1/";//Different ports
-	
-	public static void main(String [] args) throws IOException {
+	public static void main(String [] args) throws IOException, InterruptedException {
 		
+		MultiCastServer helper = new MultiCastServer();
 		
-
 		ResourceConfig config = new ResourceConfig();
 		config.register( new NamenodeClient() );
 
-		JdkHttpServerFactory.createHttpServer( URI.create(URI_BASE), config);
+		JdkHttpServerFactory.createHttpServer( URI.create(helper.getURL()), config);
+		
+		helper.sendURL();
 
-		System.err.println("Namenode Server ready....");
+		System.err.println("Namenode Server ready @ " + helper.getURL());
 	}
 	
 	@Override
