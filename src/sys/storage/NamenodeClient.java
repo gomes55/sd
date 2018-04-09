@@ -4,7 +4,6 @@ import java.io.IOException;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 import java.util.logging.Logger;
 
 import javax.ws.rs.WebApplicationException;
@@ -31,9 +30,11 @@ public class NamenodeClient implements Namenode {
 	
 	Trie<String, List<String>> names = new PatriciaTrie<>();
 	
+	private static final String URI_BASE = "http://0.0.0.0:9999/v1/";//Different ports
+	
 	public static void main(String [] args) throws IOException {
 		
-		String URI_BASE = "http://0.0.0.0:9999/v1/";//Different ports
+		
 
 		ResourceConfig config = new ResourceConfig();
 		config.register( new NamenodeClient() );

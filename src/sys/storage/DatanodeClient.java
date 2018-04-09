@@ -28,9 +28,11 @@ public class DatanodeClient implements Datanode {
 	private static final int INITIAL_SIZE = 32;
 	private Map<String, byte[]> blocks = new HashMap<>(INITIAL_SIZE);
 	
+	private static final String URI_BASE = "http://0.0.0.0:9990/v2"; //Different ports
+	
 	public static void main(String [] args) throws IOException {
 		
-		String URI_BASE = "http://0.0.0.0:9990/v2/"; //Different ports
+		
 
 		ResourceConfig config = new ResourceConfig();
 		config.register( new DatanodeClient() );
@@ -43,7 +45,8 @@ public class DatanodeClient implements Datanode {
 	
 	@Override
 	public String createBlock(byte[] data) {
-		String id = Random.key64(); //Return string with URI + id
+		String id = URI_BASE + " " + Random.key64(); //Return string with URI + id
+		System.out.println(id);
 		
 		if( blocks.putIfAbsent(id, data) != null)
 			throw new WebApplicationException( Status.CONFLICT );

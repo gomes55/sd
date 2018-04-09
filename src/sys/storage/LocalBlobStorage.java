@@ -58,7 +58,7 @@ public class LocalBlobStorage implements BlobStorage {
 			System.out.println( "RECEIVED" );
 			data = response.readEntity(List.class); 
 		}else{
-			System.err.println( response.getStatus());
+			System.err.println(response.getStatus());
 		}
 			
 		return data;
@@ -88,7 +88,6 @@ public class LocalBlobStorage implements BlobStorage {
 				    .request()
 				    .get();
 			
-			@SuppressWarnings("unchecked")
 			List<String> blobs = response.readEntity(List.class);
 		
 			for(String block : blobs) {
