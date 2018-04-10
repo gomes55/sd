@@ -10,7 +10,7 @@ import utils.Random;
 
 public class MultiCastServer {
 
-	String name = "225.4.5.6";
+	String name = "224.4.5.6";
 	String myURL;
 	
 	public MultiCastServer() {
@@ -34,7 +34,7 @@ public class MultiCastServer {
 	}
 	
 	private String generateURL() {
-		String localHost = "http://localhost";
+		String localHost = "http://localhost:";
 		int port = Random.nextInt(8999) + 1;
 		String URL = localHost + port + "/";
 		return URL;

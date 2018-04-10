@@ -11,7 +11,7 @@ public class MultiCastClient {
 	
 	private static Thread client;
 	
-	String name = "255.4.5.6";
+	String name = "224.4.5.6";
 	List<String> serversURL;
 	
 	public MultiCastClient() {
@@ -38,7 +38,7 @@ public class MultiCastClient {
 				
 				if(!serversURL.contains(data))
 					serversURL.add(data);
-				else
+				else;
 					System.out.println("RECEIVED URL --- " + data);
 			}
 		}

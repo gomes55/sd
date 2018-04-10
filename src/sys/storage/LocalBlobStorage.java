@@ -31,7 +31,7 @@ public class LocalBlobStorage implements BlobStorage {
 		Client client = ClientBuilder.newClient(config);
 		
 		helper = new MultiCastClient();
-		helper.getURL(); //why this
+		helper.getURL();
 		
 		List<String> urls = helper.getURLS();
 		while(urls.size() == 0) {
@@ -42,7 +42,6 @@ public class LocalBlobStorage implements BlobStorage {
 		URI baseURI = UriBuilder.fromUri(nameURI).build();
 		targetName = client.target(baseURI); //abrir primeiro o nameClient depois os data
 		
-		//why this again
 		while(urls.size() == 0) {
 			TimeUnit.SECONDS.sleep(2);
 			urls = helper.getURLS();
